@@ -1,3 +1,8 @@
+"""
+This script is essentially for cropping the image
+to the right aspect ratio with cloudinary
+"""
+
 import numpy as np
 import cloudinary
 import cloudinary.uploader
