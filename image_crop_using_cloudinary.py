@@ -13,11 +13,6 @@ from PIL import Image
 import os
 import cv2
 
-def dump_response(response):
-    print("Upload response:")
-    for key in sorted(response.keys()):
-        print("  %s: %s" % (key, response[key]))
-
 SEARCH_PATH = u"H:\Downloads\organized_wallpaper\\"
 NEW_PATH = u"H:\Downloads\cropped_wallpaper\\"
 
@@ -53,15 +48,13 @@ for image in images:
 
       width = im.width
       height = im.height
-      new_path = ""
+      new_path = NEW_PATH
       if width > height:
-          width = im.width 
           height = round(im.width * 9 / 16)
-          new_path = NEW_PATH + '16x9'
+          new_path += '16x9'
       else:
           width = round(im.height * 9 / 16)
-          height = im.height
-          new_path = NEW_PATH + '9x16'
+          new_path += '9x16'
 
       imageTag = cloudinary.CloudinaryImage(public_id).image(width=width, height=height, gravity="auto", crop="crop", secure=True)
       url = imageTag.split(" ")[2].split("=")[1].replace('"', '')
