@@ -16,6 +16,8 @@ images = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.expanduser(searc
 # os.mkdir('downloaded_images')
 
 for image in images:
+    if os.stat(image).st_size > 10485760:
+        continue
     splitName = image.split('\\')
     newName = splitName[-2] + ' - ' + splitName[-1]
     splitName[-1] = newName

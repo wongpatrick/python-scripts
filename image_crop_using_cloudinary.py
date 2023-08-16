@@ -28,8 +28,10 @@ cloudinary.config(
 images = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.expanduser(SEARCH_PATH)) for f in fn if '.jpg' or '.png' in f.lower()]
 
 for image in images:
+    if os.stat(image).st_size > 10485760:
+        continue
+    # Handle different characters in folder/image name
     splitName = image.split('\\')
-    
     stream = open(image, "rb")
     bytes = bytearray(stream.read())
     numpyarray = np.asarray(bytes, dtype=np.uint8)
@@ -44,8 +46,6 @@ for image in images:
       response = cloudinary.uploader.upload(image)
       public_id = response['public_id']
 
-
-      imageTag = ''
       width = im.width
       height = im.height
       new_path = ""
