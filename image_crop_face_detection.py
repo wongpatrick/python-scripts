@@ -10,6 +10,7 @@ image_array = np.array(input_image)
 
 faces = face_detector(image_array)
 
+# need to focus on all faces when multiple are present maybe find the middle point of all the faces
 if len(faces) > 0:
     face = faces[0]  # Assuming you want to focus on the first detected face
     x_center = (face.left() + face.right()) // 2
@@ -30,4 +31,5 @@ cropped_image = input_image.crop(crop_box)
 
 cropped_image.save("output_cropped_image.jpg")
 cropped_image.show()
+
 
