@@ -26,8 +26,8 @@ if input_image.height > input_image.width:
     crop_width = int(crop_height * 9 / 16)
     x1 = max(0, x_center - crop_width // 2)
     x2 = min(input_image.width, x_center + crop_width // 2)
-    y1 = 0 # max(0, y_center - crop_height // 2) need to adjust this for 16x9
-    y2 = input_image.height #min(input_image.height, y_center + crop_height // 2)
+    y1 = 0
+    y2 = input_image.height
 else:
     crop_width = input_image.width
     crop_height = int(crop_width * 9 / 16)
