@@ -19,17 +19,25 @@ else:
     x_center = input_image.width // 2
     y_center = input_image.height // 2
 
-crop_height = input_image.height 
-crop_width = int(crop_height * 9 / 16)
-x1 = max(0, x_center - crop_width // 2)
-x2 = min(input_image.width, x_center + crop_width // 2)
-y1 = 0 # max(0, y_center - crop_height // 2) need to adjust this for 16x9
-y2 = input_image.height #min(input_image.height, y_center + crop_height // 2)
+
+
+if input_image.height > input_image.width:
+    crop_height = input_image.height 
+    crop_width = int(crop_height * 9 / 16)
+    x1 = max(0, x_center - crop_width // 2)
+    x2 = min(input_image.width, x_center + crop_width // 2)
+    y1 = 0 # max(0, y_center - crop_height // 2) need to adjust this for 16x9
+    y2 = input_image.height #min(input_image.height, y_center + crop_height // 2)
+else:
+    crop_width = input_image.width
+    crop_height = int(crop_width * 9 / 16)
+    x1 = 0
+    x2 = crop_width
+    y1 = max(0, y_center - crop_height // 2)
+    y2 = min(input_image.height, y_center + crop_height // 2)
 
 crop_box = (x1, y1, x2, y2)
 cropped_image = input_image.crop(crop_box)
 
 cropped_image.save("output_cropped_image.jpg")
 cropped_image.show()
-
-
