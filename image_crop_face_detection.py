@@ -10,7 +10,6 @@ NEW_PATH = u"H:\Downloads\cropped_wallpaper\\"
 
 images = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.expanduser(SEARCH_PATH)) for f in fn if '.jpg' or '.png' in f.lower()]
 
-
 face_detector = dlib.get_frontal_face_detector()
 
 for image in images:
@@ -25,7 +24,6 @@ for image in images:
         image = '\\'.join(splitName)
 
         with Image.open(image) as input_image:
-        # input_image = Image.open("pic_4.jpg")
             print("Working on "+ image)
 
             image_array = np.array(input_image)
@@ -42,8 +40,7 @@ for image in images:
                 x_center = input_image.width // 2
                 y_center = input_image.height // 2
 
-
-
+            # Determine if 9x16 or 16x9
             if input_image.height > input_image.width:
                 crop_height = input_image.height 
                 crop_width = int(crop_height * 9 / 16)
