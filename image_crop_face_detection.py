@@ -31,11 +31,14 @@ for image in images:
             faces = face_detector(image_array)
             new_path = NEW_PATH
 
-            # need to focus on all faces when multiple are present maybe find the middle point of all the faces
             if len(faces) > 0:
-                face = faces[0]  # Assuming you want to focus on the first detected face
-                x_center = (face.left() + face.right()) // 2
-                y_center = (face.top() + face.bottom()) // 2
+                x = []
+                y = []
+                for face in faces:
+                    x.append((face.left() + face.right()) // 2)
+                    y.append((face.top() + face.bottom()) // 2)
+                x_center = np.average(x)
+                y_center = np.average(y)
             else:
                 x_center = input_image.width // 2
                 y_center = input_image.height // 2
