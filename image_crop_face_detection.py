@@ -45,8 +45,10 @@ for image in images:
 
             # Determine if 9x16 or 16x9
             if input_image.height > input_image.width:
+                new_path += '9x16'
+
                 crop_height = input_image.height 
-                crop_width = int(crop_height * 9 / 16)
+                crop_width =  min(int(crop_height * 9 / 16), input_image.width)
                 x1 = max(0, x_center - crop_width // 2)
                 if x1 == 0:
                     x2 = crop_width
@@ -55,9 +57,13 @@ for image in images:
                     if x2 == input_image.width:
                         x1 = input_image.width - crop_width
                 y1 = 0
-                y2 = input_image.height
-                new_path += '9x16'
+                if x2 == input_image.width:
+                    y2 = int(x2 * 16 / 9)
+                else:
+                    y2 = input_image.height
+
             else:
+                new_path += '16x9'
                 crop_width = input_image.width
                 crop_height = int(crop_width * 9 / 16)
                 x1 = 0
@@ -69,12 +75,16 @@ for image in images:
                     y2 = min(input_image.height, y_center + crop_height // 2)
                     if y2 == input_image.height:
                         y1 = input_image.height - crop_height
-                new_path += '16x9'
+
+            if y2 > input_image.height:
+                raise Exception("Somehow we got too far")
+            if x2 > input_image.width:
+                raise Exception("Somehow we got too far")
 
             crop_box = (x1, y1, x2, y2)
             cropped_image = input_image.crop(crop_box)
 
             cropped_image.save(image)
             shutil.move(image, new_path)
-    except:
-        print(image + " failed")
+    except Exception as e:
+        print(image + " failed %s", e)
