@@ -31,6 +31,7 @@ for image in images:
             faces = face_detector(image_array)
             new_path = NEW_PATH
 
+            # Calculate the center of focus
             if len(faces) > 0:
                 x = []
                 y = []
@@ -49,37 +50,50 @@ for image in images:
 
                 crop_height = input_image.height 
                 crop_width =  min(int(crop_height * 9 / 16), input_image.width)
-                x1 = max(0, x_center - crop_width // 2)
-                if x1 == 0:
-                    x2 = crop_width
-                else:
-                    x2 = min(input_image.width, x_center + crop_width // 2)
-                    if x2 == input_image.width:
-                        x1 = input_image.width - crop_width
-                y1 = 0
-                if x2 == input_image.width:
-                    y2 = int(x2 * 16 / 9)
-                else:
-                    y2 = input_image.height
+                if crop_width == input_image.width: # make sure to make it 9x16
+                    crop_height = int(crop_width * 16 / 9)
+
+                # x1 = max(0, x_center - crop_width // 2)
+                # if x1 == 0:
+                #     x2 = crop_width
+                # else:
+                #     x2 = min(input_image.width, x_center + crop_width // 2)
+                #     if x2 == input_image.width:
+                #         x1 = input_image.width - crop_width
+                # y1 = max(0, y_center - crop_height // 2)
+                # if y1 == 0:
+                #     y2 = crop_height
+                # else:
+                #     y2 = min(input_image.height, y_center + crop_height // 2)
+                #     if y2 == input_image.height:
+                #         y1 = input_image.height - crop_height
 
             else:
                 new_path += '16x9'
                 crop_width = input_image.width
-                crop_height = int(crop_width * 9 / 16)
-                x1 = 0
+                crop_height = min(int(crop_width * 9 / 16), input_image.height)
+                if crop_height == input_image.height: # make sure to make it 16x9
+                    crop_width = int(crop_height * 16 / 9)
+                
+            x1 = max(0, x_center - crop_width // 2)
+            if x1 == 0:
                 x2 = crop_width
-                y1 = max(0, y_center - crop_height // 2)
-                if y1 == 0:
-                    y2 = crop_height
-                else:
-                    y2 = min(input_image.height, y_center + crop_height // 2)
-                    if y2 == input_image.height:
-                        y1 = input_image.height - crop_height
+            else:
+                x2 = min(input_image.width, x_center + crop_width // 2)
+                if x2 == input_image.width:
+                    x1 = input_image.width - crop_width
+            y1 = max(0, y_center - crop_height // 2)
+            if y1 == 0:
+                y2 = crop_height
+            else:
+                y2 = min(input_image.height, y_center + crop_height // 2)
+                if y2 == input_image.height:
+                    y1 = input_image.height - crop_height
 
             if y2 > input_image.height:
-                raise Exception("Somehow we got too far")
+                raise Exception("Y2 is too far")
             if x2 > input_image.width:
-                raise Exception("Somehow we got too far")
+                raise Exception("X2 is too far")
 
             crop_box = (x1, y1, x2, y2)
             cropped_image = input_image.crop(crop_box)
@@ -87,4 +101,4 @@ for image in images:
             cropped_image.save(image)
             shutil.move(image, new_path)
     except Exception as e:
-        print(image + " failed %s", e)
+        print(image + " failed ", e)
