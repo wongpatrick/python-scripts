@@ -8,21 +8,13 @@ import numpy as np
 
 SEARCH_PATH = u"H:\Downloads\organized_wallpaper\\"
 NEW_PATH = u"H:\Downloads\cropped_wallpaper\\"
+ERROR_PATH = u"H:\Downloads\error_wallpaper\\"
 
 def detect(filename, cascade_file = "./lbpcascade_animeface.xml"):
     if not os.path.isfile(cascade_file):
         raise RuntimeError("%s: not found" % cascade_file)
 
     cascade = cv2.CascadeClassifier(cascade_file)
-
-    splitName = filename.split('\\')
-    stream = open(filename, "rb")
-    bytes = bytearray(stream.read())
-    numpyarray = np.asarray(bytes, dtype=np.uint8)
-    im = cv2.imdecode(numpyarray, cv2.IMREAD_UNCHANGED)
-    stream.close()
-    os.rename(filename, '\\'.join(splitName))
-    filename = '\\'.join(splitName)
     
     with Image.open(filename) as input_image:
         print("Working on "+ filename)
@@ -50,41 +42,42 @@ def detect(filename, cascade_file = "./lbpcascade_animeface.xml"):
                 y_arr.append((y + h) // 2)
             x_center = np.average(x_arr)
             y_center = np.average(y_arr)
-            # x,y,w,h = faces[0]  # Assuming you want to focus on the first detected face
-            # x_center = (x + w) // 2
-            # y_center = (y + h) // 2
         else:
-            # x_center = input_image.width // 2
-            # y_center = input_image.height // 2
             raise Exception("Found no face")
 
         # Determine if 9x16 or 16x9
         if input_image.height > input_image.width:
-            crop_height = input_image.height 
-            crop_width = int(crop_height * 9 / 16)
-            x1 = max(0, x_center - crop_width // 2)
-            if x1 == 0:
-                x2 = crop_width
-            else:
-                x2 = min(input_image.width, x_center + crop_width // 2)
-                if x2 == input_image.width:
-                    x1 = input_image.width - crop_width
-            y1 = 0
-            y2 = input_image.height
             new_path += '9x16'
+            crop_height = input_image.height 
+            crop_width =  min(int(crop_height * 9 / 16), input_image.width)
+            if crop_width == input_image.width: # make sure to make it 9x16
+                crop_height = int(crop_width * 16 / 9)
         else:
-            crop_width = input_image.width
-            crop_height = int(crop_width * 9 / 16)
-            x1 = 0
-            x2 = crop_width
-            y1 = max(0, y_center - crop_height // 2)
-            if y1 == 0:
-                y2 = crop_height
-            else:
-                y2 = min(input_image.height, y_center + crop_height // 2)
-                if y2 == input_image.height:
-                    y1 = input_image.height - crop_height
             new_path += '16x9'
+            crop_width = input_image.width
+            crop_height = min(int(crop_width * 9 / 16), input_image.height)
+            if crop_height == input_image.height: # make sure to make it 16x9
+                crop_width = int(crop_height * 16 / 9)
+        
+        x1 = max(0, x_center - crop_width // 2)
+        if x1 == 0:
+            x2 = crop_width
+        else:
+            x2 = min(input_image.width, x_center + crop_width // 2)
+            if x2 == input_image.width:
+                x1 = input_image.width - crop_width
+        y1 = max(0, y_center - crop_height // 2)
+        if y1 == 0:
+            y2 = crop_height
+        else:
+            y2 = min(input_image.height, y_center + crop_height // 2)
+            if y2 == input_image.height:
+                y1 = input_image.height - crop_height
+
+        if y2 > input_image.height:
+            raise Exception("Y2 is too far")
+        if x2 > input_image.width:
+            raise Exception("X2 is too far")
 
         crop_box = (x1, y1, x2, y2)
         cropped_image = input_image.crop(crop_box)
@@ -100,7 +93,16 @@ def detect(filename, cascade_file = "./lbpcascade_animeface.xml"):
 images = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.expanduser(SEARCH_PATH)) for f in fn if '.jpg' or '.png' in f.lower()]
 
 for image in images:
+    splitName = image.split('\\')
+    stream = open(image, "rb")
+    bytes = bytearray(stream.read())
+    numpyarray = np.asarray(bytes, dtype=np.uint8)
+    im = cv2.imdecode(numpyarray, cv2.IMREAD_UNCHANGED)
+    stream.close()
+    os.rename(image, '\\'.join(splitName))
+    image = '\\'.join(splitName)
     try:
         detect(image)
-    except:
-        print(image + " failed")
+    except Exception as e:
+        shutil.move(image, ERROR_PATH)
+        print(image + " failed ", e)
