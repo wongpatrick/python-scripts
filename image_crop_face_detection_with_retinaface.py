@@ -15,6 +15,13 @@ ERROR_PATH = u"H:\\Downloads\\error_wallpaper\\"
 images = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.expanduser(SEARCH_PATH)) for f in fn if '.jpg' or '.png' in f.lower()]
 Image.MAX_IMAGE_PIXELS = 933120000
 
+def calculate_aspect_ratio(width, height):
+    return round(width / height, 2)
+
+TARGET_RATIO_9x16 = round(9 / 16, 2)
+TARGET_RATIO_16x9 = round(16 / 9, 2)
+TARGET_RATIO_16x10 = round(16 / 10, 2)
+
 face_detector = dlib.get_frontal_face_detector()
 for image in images:
     try:
@@ -29,71 +36,77 @@ for image in images:
         
 
         with Image.open(image) as input_image:
-            print("Working on "+ image)
+            print(f"Processing: {image}")
+            
+            width, height = input_image.width, input_image.height
+            current_ratio = calculate_aspect_ratio(width, height)
+            
+            # Move images that already match target aspect ratio
+            if current_ratio == TARGET_RATIO_9x16:
+                print("Image matches 9x16 aspect ratio. Moving without cropping.")
+                new_image_path = os.path.join(NEW_PATH, "9x16")
+                os.makedirs(new_image_path, exist_ok=True)
+                input_image.close()  # Ensure the image is closed before moving
+                shutil.move(image, os.path.join(new_image_path, os.path.basename(image)))
+                continue
+            elif current_ratio == TARGET_RATIO_16x9:
+                print("Image matches 16x9 aspect ratio. Moving without cropping.")
+                new_image_path = os.path.join(NEW_PATH, "16x9")
+                os.makedirs(new_image_path, exist_ok=True)
+                input_image.close()  # Ensure the image is closed before moving
+                shutil.move(image, os.path.join(new_image_path, os.path.basename(image)))
+                continue
 
+            # Detect faces and calculate center
             image_array = np.array(input_image)
             faces = RetinaFace.detect_faces(image_array)
-            new_path = NEW_PATH
+            if not faces:
+                raise Exception("No face detected. Skipping image.")
 
-            # Calculate the center of focus
-            if len(faces) > 0:
-                x = []
-                y = []
-                for face in faces:
-                    # print(faces[face])
-                    (right, top, left, bottom) = faces[face]["facial_area"]
-                    x.append((left + right) // 2)
-                    y.append((top + bottom) // 2)
-                x_center = np.average(x)
-                y_center = np.average(y)
-            else:
-                raise Exception("Can not find face")
-                # x_center = input_image.width // 2
-                # y_center = input_image.height // 2
+            # Calculate center of detected faces
+            x_coords = [(face["facial_area"][0] + face["facial_area"][2]) // 2 for face in faces.values()]
+            y_coords = [(face["facial_area"][1] + face["facial_area"][3]) // 2 for face in faces.values()]
+            x_center = int(np.mean(x_coords))
+            y_center = int(np.mean(y_coords))
 
-            # Determine if 9x16 or 16x9
-            if input_image.height > input_image.width:
-                new_path += '9x16'
-                crop_height = input_image.height 
-                crop_width =  min(int(crop_height * 9 / 16), input_image.width)
-                if crop_width == input_image.width: # make sure to make it 9x16
-                    crop_height = int(crop_width * 16 / 9)
+            # Calculate target crop dimensions
+            if height > width:  # Portrait
+                target_width = min(width, int(height * 9 / 16))
+                target_height = int(target_width * 16 / 9)
+            else:  # Landscape
+                target_height = min(height, int(width * 9 / 16))
+                target_width = int(target_height * 16 / 9)
 
-            else:
-                new_path += '16x9'
-                crop_width = input_image.width
-                crop_height = min(int(crop_width * 9 / 16), input_image.height)
-                if crop_height == input_image.height: # make sure to make it 16x9
-                    crop_width = int(crop_height * 16 / 9)
-                
-            x1 = max(0, x_center - crop_width // 2)
-            if x1 == 0:
-                x2 = crop_width
-            else:
-                x2 = min(input_image.width, x_center + crop_width // 2)
-                if x2 == input_image.width:
-                    x1 = input_image.width - crop_width
-            y1 = max(0, y_center - crop_height // 2)
-            if y1 == 0:
-                y2 = crop_height
-            else:
-                y2 = min(input_image.height, y_center + crop_height // 2)
-                if y2 == input_image.height:
-                    y1 = input_image.height - crop_height
+            # Adjust crop box to stay within bounds
+            x1 = x_center - target_width // 2
+            y1 = y_center - target_height // 2
+            x2 = x1 + target_width
+            y2 = y1 + target_height
 
-            if y2 > input_image.height:
-                raise Exception("Y2 is too far")
-            if x2 > input_image.width:
-                raise Exception("X2 is too far")
+            if x1 < 0:  # Push right if left edge is out of bounds
+                x1 = 0
+                x2 = target_width
+            if x2 > width:  # Push left if right edge is out of bounds
+                x2 = width
+                x1 = width - target_width
+            if y1 < 0:  # Push down if top edge is out of bounds
+                y1 = 0
+                y2 = target_height
+            if y2 > height:  # Push up if bottom edge is out of bounds
+                y2 = height
+                y1 = height - target_height
 
+            # Crop and save
             crop_box = (x1, y1, x2, y2)
             cropped_image = input_image.crop(crop_box)
+            new_image_path = os.path.join(NEW_PATH, f"{'9x16' if height > width else '16x9'}")
+            os.makedirs(new_image_path, exist_ok=True)
+            cropped_image.save(os.path.join(new_image_path, os.path.basename(image)))
 
-            cropped_image.save(image)
-            shutil.move(image, new_path)
+            # Delete the original image after cropping
+            os.remove(image)
+
     except Exception as e:
-        shutil.move(image, ERROR_PATH)
-        print(image + " failed ", e)
-
-# if __name__=="__main__":
-#     image_crop()
+        error_image_path = os.path.join(ERROR_PATH, os.path.basename(image))
+        shutil.move(image, error_image_path)
+        print(f"Failed to process {image}: {e}")
