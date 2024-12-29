@@ -46,15 +46,20 @@ for image in images:
                 print("Image matches 9x16 aspect ratio. Moving without cropping.")
                 new_image_path = os.path.join(NEW_PATH, "9x16")
                 os.makedirs(new_image_path, exist_ok=True)
-                input_image.close()  # Ensure the image is closed before moving
-                shutil.move(image, os.path.join(new_image_path, os.path.basename(image)))
+                # input_image.close()  # Ensure the image is closed before moving
+                # shutil.move(image, os.path.join(new_image_path, os.path.basename(image)))
+                input_image.save(os.path.join(new_image_path, os.path.basename(image)))
+                os.remove(image)
                 continue
             elif current_ratio == TARGET_RATIO_16x9:
                 print("Image matches 16x9 aspect ratio. Moving without cropping.")
                 new_image_path = os.path.join(NEW_PATH, "16x9")
                 os.makedirs(new_image_path, exist_ok=True)
-                input_image.close()  # Ensure the image is closed before moving
-                shutil.move(image, os.path.join(new_image_path, os.path.basename(image)))
+                # input_image.close()  # Ensure the image is closed before moving
+                input_image.save(os.path.join(new_image_path, os.path.basename(image)))
+                os.remove(image)
+
+                # shutil.move(image, os.path.join(new_image_path, os.path.basename(image)))
                 continue
 
             # Detect faces and calculate center
