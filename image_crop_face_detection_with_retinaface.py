@@ -3,7 +3,7 @@
 import os
 import shutil
 from PIL import Image
-import dlib
+# import dlib
 import numpy as np
 import cv2
 from retinaface import RetinaFace
@@ -22,7 +22,7 @@ TARGET_RATIO_9x16 = round(9 / 16, 2)
 TARGET_RATIO_16x9 = round(16 / 9, 2)
 TARGET_RATIO_16x10 = round(16 / 10, 2)
 
-face_detector = dlib.get_frontal_face_detector()
+# face_detector = dlib.get_frontal_face_detector()
 for image in images:
     try:
         splitName = image.split('\\')
